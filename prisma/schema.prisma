@@ -72,6 +72,7 @@ model CoachKnowledge {
 
   status      ProcessingStatus @default(PENDING)
   chunkCount  Int              @default(0)
+  retryCount  Int              @default(0)
   processedAt DateTime?
   error       String?          @db.Text
 

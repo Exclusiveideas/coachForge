@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/middleware/withAuth";
 import { prisma } from "@/lib/db";
 import { addKnowledgeSchema } from "@/lib/validation/knowledge";
-import { processKnowledge } from "@/lib/services/knowledge/embedder";
+import { invokeProcessKnowledge } from "@/lib/services/lambda";
 
 export const GET = withAuth(async (_request, user, context) => {
   const { id } = await context!.params;
@@ -53,8 +53,7 @@ export const POST = withAuth(async (request: NextRequest, user, context) => {
       },
     });
 
-    // Process in background
-    processKnowledge(knowledge.id).catch(console.error);
+    await invokeProcessKnowledge(knowledge.id);
 
     return NextResponse.json({ knowledge }, { status: 201 });
   } catch {

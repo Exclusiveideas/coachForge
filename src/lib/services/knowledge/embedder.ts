@@ -92,10 +92,16 @@ export async function processKnowledge(knowledgeId: string) {
   } catch (error) {
     console.error("Knowledge processing error:", error);
 
+    const current = await prisma.coachKnowledge.findUnique({
+      where: { id: knowledgeId },
+      select: { retryCount: true },
+    });
+
     await prisma.coachKnowledge.update({
       where: { id: knowledgeId },
       data: {
         status: "FAILED",
+        retryCount: (current?.retryCount ?? 0) + 1,
         error: error instanceof Error ? error.message : "Unknown error",
       },
     });

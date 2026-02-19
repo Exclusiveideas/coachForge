@@ -294,7 +294,7 @@ function UploadDocumentForm({
       </div>
       <div>
         <label className="block text-sm font-medium text-dark-brown mb-1.5">
-          File (PDF, DOC, DOCX, or TXT - max 10MB)
+          File (PDF, DOC, DOCX, or TXT - max 25MB)
         </label>
         <input
           type="file"

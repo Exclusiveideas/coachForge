@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/middleware/withAuth";
 import { prisma } from "@/lib/db";
-import { processKnowledge } from "@/lib/services/knowledge/embedder";
+import { invokeProcessKnowledge } from "@/lib/services/lambda";
 import {
   extractPdfText,
   extractDocText,
@@ -14,7 +14,7 @@ const ALLOWED_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/plain",
 ];
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_SIZE = 25 * 1024 * 1024; // 25MB
 
 export const POST = withAuth(async (request: NextRequest, user, context) => {
   const { id } = await context!.params;
@@ -79,7 +79,7 @@ export const POST = withAuth(async (request: NextRequest, user, context) => {
       },
     });
 
-    processKnowledge(knowledge.id).catch(console.error);
+    await invokeProcessKnowledge(knowledge.id);
 
     return NextResponse.json({ knowledge }, { status: 201 });
   } catch (error) {
