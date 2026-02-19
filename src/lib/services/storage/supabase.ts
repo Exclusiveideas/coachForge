@@ -1,15 +1,4 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
-
-let _supabase: SupabaseClient | null = null;
-function getSupabase() {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_KEY!
-    );
-  }
-  return _supabase;
-}
+import { supabase } from "@/lib/supabase";
 
 export async function uploadFile(
   bucket: string,
@@ -17,7 +6,7 @@ export async function uploadFile(
   file: Buffer,
   contentType: string
 ): Promise<string> {
-  const { error } = await getSupabase().storage
+  const { error } = await supabase.storage
     .from(bucket)
     .upload(path, file, { contentType, upsert: true });
 
@@ -32,5 +21,5 @@ export async function deleteFile(
   bucket: string,
   path: string
 ): Promise<void> {
-  await getSupabase().storage.from(bucket).remove([path]);
+  await supabase.storage.from(bucket).remove([path]);
 }

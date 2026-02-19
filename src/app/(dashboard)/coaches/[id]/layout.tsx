@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { getServerSession } from "@/lib/auth/server-session";
 import { getCoachById } from "@/lib/services/coachService";
 import { CoachDetailNav } from "@/components/coaches/CoachDetailNav";
@@ -21,6 +23,13 @@ export default async function CoachDetailLayout({
   return (
     <div>
       <div className="mb-6">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-sm text-warm-brown hover:text-dark-brown transition mb-4"
+        >
+          <ArrowLeft size={16} />
+          Back to Dashboard
+        </Link>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-accent-orange/10 rounded-xl flex items-center justify-center text-2xl">
             {coach.emoji}

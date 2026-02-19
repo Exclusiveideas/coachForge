@@ -1,16 +1,5 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { generateEmbedding } from "@/lib/services/openai/service";
-
-let _supabase: SupabaseClient | null = null;
-function getSupabase() {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_KEY!
-    );
-  }
-  return _supabase;
-}
 
 interface RetrievedChunk {
   content: string;
@@ -24,7 +13,7 @@ export async function queryKnowledgeBase(
 ): Promise<RetrievedChunk[]> {
   const queryEmbedding = await generateEmbedding(query);
 
-  const { data, error } = await getSupabase().rpc("match_knowledge_chunks", {
+  const { data, error } = await supabase.rpc("match_knowledge_chunks", {
     query_embedding: queryEmbedding,
     match_coach_id: coachId,
     match_count: topK,

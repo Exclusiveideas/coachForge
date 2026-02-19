@@ -5,6 +5,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { TONES, EMOJI_OPTIONS } from "@/lib/validation/coach";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/AlertDialog";
 
 interface Coach {
   id: string;
@@ -61,10 +70,6 @@ export function SettingsForm({ coach }: { coach: Coach }) {
   }
 
   async function handleDelete() {
-    if (!confirm("Are you sure you want to delete this coach? This cannot be undone.")) {
-      return;
-    }
-
     setDeleting(true);
     try {
       const res = await fetch(`/api/coaches/${coach.id}`, { method: "DELETE" });
@@ -185,14 +190,29 @@ export function SettingsForm({ coach }: { coach: Coach }) {
       </div>
 
       <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={deleting}
-          className="text-sm text-error hover:underline disabled:opacity-50"
-        >
-          {deleting ? "Deleting..." : "Delete Coach"}
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              type="button"
+              disabled={deleting}
+              className="text-sm text-error hover:underline disabled:opacity-50"
+            >
+              {deleting ? "Deleting..." : "Delete Coach"}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogTitle>Delete Coach</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this coach? This action cannot be undone and all associated data will be permanently removed.
+            </AlertDialogDescription>
+            <div className="mt-4 flex justify-end gap-3">
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>
+                Delete
+              </AlertDialogAction>
+            </div>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <button
           type="submit"

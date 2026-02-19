@@ -1,19 +1,8 @@
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import { prisma } from "@/lib/db";
 import { generateEmbeddings } from "@/lib/services/openai/service";
 import { chunkText } from "./chunker";
 import { extractPdfText, extractDocxText, extractUrlText } from "./extractors";
-
-let _supabase: SupabaseClient | null = null;
-function getSupabase() {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_KEY!
-    );
-  }
-  return _supabase;
-}
 
 export async function processKnowledge(knowledgeId: string) {
   const knowledge = await prisma.coachKnowledge.findUnique({
@@ -49,7 +38,7 @@ export async function processKnowledge(knowledgeId: string) {
           throw new Error("No storage key for document");
         }
 
-        const { data, error } = await getSupabase().storage
+        const { data, error } = await supabase.storage
           .from("knowledge")
           .download(knowledge.storageKey);
 

@@ -1,0 +1,71 @@
+"use client";
+
+import { useState, useEffect } from "react";
+
+const THINKING_TEXTS = [
+  "Pondering your question...",
+  "Crafting a thoughtful response...",
+  "Digging into my knowledge base...",
+  "Connecting the dots...",
+  "Thinking this through...",
+  "Analyzing your question...",
+  "Putting thoughts together...",
+  "Reflecting on this...",
+  "Considering the best approach...",
+  "Gathering my thoughts...",
+  "Processing your message...",
+  "Working through this...",
+  "Formulating a response...",
+  "Let me think about that...",
+  "Exploring possibilities...",
+  "Weighing different angles...",
+  "Synthesizing an answer...",
+  "Mulling this over...",
+  "Assembling my thoughts...",
+  "Brewing up a response...",
+] as const;
+
+function pickRandomThinkingText(): string {
+  return THINKING_TEXTS[Math.floor(Math.random() * THINKING_TEXTS.length)];
+}
+
+export function ThinkingIndicator() {
+  const [text] = useState(pickRandomThinkingText);
+
+  const [dotCount, setDotCount] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDotCount((prev) => (prev + 1) % 4);
+    }, 400);
+    return () => clearInterval(interval);
+  }, []);
+
+  const baseText = text.replace(/\.{2,}$/, "");
+  const dots = ".".repeat(dotCount || 1);
+
+  return (
+    <div className="flex items-start gap-2">
+      <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 text-white/60 text-sm">
+        <div className="flex gap-0.5">
+          <span
+            className="w-1.5 h-1.5 bg-accent-orange/70 rounded-full animate-bounce"
+            style={{ animationDelay: "0ms" }}
+          />
+          <span
+            className="w-1.5 h-1.5 bg-accent-orange/70 rounded-full animate-bounce"
+            style={{ animationDelay: "150ms" }}
+          />
+          <span
+            className="w-1.5 h-1.5 bg-accent-orange/70 rounded-full animate-bounce"
+            style={{ animationDelay: "300ms" }}
+          />
+        </div>
+        <span className="italic">
+          {baseText}
+          {dots}
+        </span>
+      </div>
+    </div>
+  );
+}

@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { X, ArrowRight } from "lucide-react";
+import { MarkdownMessage } from "@/components/chat/MarkdownMessage";
+import { ThinkingIndicator } from "@/components/chat/ThinkingIndicator";
 
 interface Coach {
   id: string;
@@ -140,22 +142,39 @@ export function PreviewModal({
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-              >
+            {messages.map((msg, i) => {
+              const isStreamingThis = streaming && i === messages.length - 1 && msg.role === "assistant";
+              const isEmpty = !msg.content;
+
+              if (isStreamingThis && isEmpty) {
+                return (
+                  <div key={i} className="flex justify-start">
+                    <ThinkingIndicator />
+                  </div>
+                );
+              }
+
+              return (
                 <div
-                  className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                    msg.role === "user"
-                      ? "bg-accent-orange text-white"
-                      : "bg-white/10 text-white/90"
-                  }`}
+                  key={i}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  {msg.content || (streaming && i === messages.length - 1 ? "..." : "")}
+                  <div
+                    className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                      msg.role === "user"
+                        ? "bg-accent-orange text-white"
+                        : "bg-white/10 text-white/90"
+                    }`}
+                  >
+                    {msg.role === "assistant" ? (
+                      <MarkdownMessage content={msg.content} />
+                    ) : (
+                      msg.content
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             <div ref={messagesEndRef} />
           </div>
 
