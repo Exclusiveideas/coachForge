@@ -25,16 +25,26 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      {/* Inline widget — uses data-cf-coach-id container approach for Next.js compatibility */}
+      <div
+        className="mb-8"
+        data-cf-coach-id="cmlt49koy0004tx6lvhfeeyo3"
+        data-mode="inline"
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <CreateCoachForm />
         <CoachList initialCoaches={coaches} />
       </div>
 
-      <Script
-        src="http://localhost:3000/widget.js"
-        data-coach-id="cmlt4akvd0005tx6lbunl6gf7"
-        strategy="lazyOnload"
+      {/* Floating widget */}
+      <div
+        data-cf-coach-id="cmlt4akvd0005tx6lbunl6gf7"
+        style={{ display: "none" }}
       />
+
+      {/* Load widget.js once — it initializes all data-cf-coach-id containers */}
+      <Script src="/widget.js" strategy="lazyOnload" />
     </div>
   );
 }
