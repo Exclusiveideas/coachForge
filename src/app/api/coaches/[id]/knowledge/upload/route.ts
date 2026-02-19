@@ -44,7 +44,7 @@ export const POST = withAuth(async (request: NextRequest, user, context) => {
 
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
-        { error: "File too large. Maximum 10MB." },
+        { error: "File too large. Maximum 25MB." },
         { status: 400 }
       );
     }
@@ -79,7 +79,9 @@ export const POST = withAuth(async (request: NextRequest, user, context) => {
       },
     });
 
-    await invokeProcessKnowledge(knowledge.id);
+    invokeProcessKnowledge(knowledge.id).catch((err) =>
+      console.error("Lambda invoke error:", err)
+    );
 
     return NextResponse.json({ knowledge }, { status: 201 });
   } catch (error) {

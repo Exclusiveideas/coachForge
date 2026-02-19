@@ -53,7 +53,9 @@ export const POST = withAuth(async (request: NextRequest, user, context) => {
       },
     });
 
-    await invokeProcessKnowledge(knowledge.id);
+    invokeProcessKnowledge(knowledge.id).catch((err) =>
+      console.error("Lambda invoke error:", err)
+    );
 
     return NextResponse.json({ knowledge }, { status: 201 });
   } catch {
