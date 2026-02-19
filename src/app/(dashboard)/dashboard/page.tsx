@@ -1,3 +1,4 @@
+import Script from "next/script";
 import { getServerSession } from "@/lib/auth/server-session";
 import { getCoachesByUser } from "@/lib/services/coachService";
 import { CreateCoachForm } from "@/components/dashboard/CreateCoachForm";
@@ -28,6 +29,12 @@ export default async function DashboardPage() {
         <CreateCoachForm />
         <CoachList initialCoaches={coaches} />
       </div>
+
+      <Script
+        src="http://localhost:3000/widget.js"
+        data-coach-id="cmlt4akvd0005tx6lbunl6gf7"
+        strategy="lazyOnload"
+      />
     </div>
   );
 }

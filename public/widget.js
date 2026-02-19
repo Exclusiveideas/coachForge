@@ -74,9 +74,41 @@
     ".cf-close{background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;padding:4px}",
     ".cf-close:hover{color:#fff}",
     ".cf-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}",
-    ".cf-msg{max-width:80%;padding:10px 16px;border-radius:16px;font-size:14px;line-height:1.5;word-wrap:break-word;white-space:pre-wrap}",
+    ".cf-msg{max-width:80%;padding:10px 16px;border-radius:16px;font-size:14px;line-height:1.5;word-wrap:break-word}",
     ".cf-msg.assistant{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);align-self:flex-start;border-bottom-left-radius:4px}",
-    ".cf-msg.user{background:#E8853D;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}",
+    ".cf-msg.user{background:#E8853D;color:#fff;align-self:flex-end;border-bottom-right-radius:4px;white-space:pre-wrap}",
+    // Thinking indicator
+    ".cf-thinking{display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:16px;background:rgba(255,255,255,.1);align-self:flex-start;border-bottom-left-radius:4px}",
+    ".cf-thinking-text{color:rgba(255,255,255,.6);font-size:14px;font-style:italic}",
+    ".cf-thinking-dots{display:flex;gap:3px;align-items:center}",
+    ".cf-thinking-dot{width:6px;height:6px;background:rgba(232,133,61,.7);border-radius:50%;animation:cf-ripple 1.2s ease-in-out infinite}",
+    ".cf-thinking-dot:nth-child(2){animation-delay:200ms}",
+    ".cf-thinking-dot:nth-child(3){animation-delay:400ms}",
+    "@keyframes cf-ripple{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.4);opacity:1}}",
+    // Markdown styles
+    ".cf-msg.assistant .cf-md-h1{font-size:16px;font-weight:700;margin:8px 0 4px;line-height:1.3}",
+    ".cf-msg.assistant .cf-md-h1:first-child{margin-top:0}",
+    ".cf-msg.assistant .cf-md-h2{font-size:15px;font-weight:700;margin:6px 0 3px;line-height:1.3}",
+    ".cf-msg.assistant .cf-md-h2:first-child{margin-top:0}",
+    ".cf-msg.assistant .cf-md-h3{font-size:14px;font-weight:700;margin:4px 0 2px;line-height:1.3}",
+    ".cf-msg.assistant .cf-md-h3:first-child{margin-top:0}",
+    ".cf-msg.assistant .cf-md-p{margin:0 0 8px}",
+    ".cf-msg.assistant .cf-md-p:last-child{margin-bottom:0}",
+    ".cf-msg.assistant strong{font-weight:600}",
+    ".cf-msg.assistant em{font-style:italic}",
+    ".cf-msg.assistant .cf-md-ul,.cf-msg.assistant .cf-md-ol{margin:0 0 8px;padding-left:20px;list-style-position:outside}",
+    ".cf-msg.assistant .cf-md-ul:last-child,.cf-msg.assistant .cf-md-ol:last-child{margin-bottom:0}",
+    ".cf-msg.assistant .cf-md-ul{list-style-type:disc}",
+    ".cf-msg.assistant .cf-md-ol{list-style-type:decimal}",
+    ".cf-msg.assistant .cf-md-li,.cf-msg.assistant .cf-md-oli{line-height:1.5;margin:2px 0}",
+    ".cf-msg.assistant .cf-md-bq{border-left:2px solid rgba(232,133,61,.5);padding-left:12px;margin:8px 0;color:rgba(255,255,255,.7);font-style:italic}",
+    ".cf-msg.assistant .cf-md-code{background:rgba(255,255,255,.1);border-radius:4px;padding:1px 6px;font-size:12px;font-family:monospace}",
+    ".cf-msg.assistant .cf-md-pre{margin:8px 0;background:rgba(0,0,0,.3);border-radius:8px;padding:12px;overflow-x:auto}",
+    ".cf-msg.assistant .cf-md-pre:last-child{margin-bottom:0}",
+    ".cf-msg.assistant .cf-md-codeblock{font-size:12px;font-family:monospace;white-space:pre;display:block}",
+    ".cf-msg.assistant .cf-md-a{color:#E8853D;text-decoration:underline;text-underline-offset:2px}",
+    ".cf-msg.assistant .cf-md-a:hover{color:#D4742F}",
+    ".cf-msg.assistant .cf-md-hr{border:none;border-top:1px solid rgba(255,255,255,.1);margin:12px 0}",
     ".cf-input-area{padding:12px;border-top:1px solid rgba(255,255,255,.1);display:flex;gap:8px}",
     ".cf-input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 16px;color:#fff;font-size:14px;outline:none}",
     ".cf-input::placeholder{color:rgba(255,255,255,.3)}",
@@ -153,13 +185,37 @@
     var msgContainer = document.createElement("div");
     msgContainer.className = "cf-messages";
     for (var i = 0; i < messages.length; i++) {
+      var isLastMsg = i === messages.length - 1;
+      var isEmpty = !messages[i].content;
+
+      // Show thinking indicator for empty streaming assistant message
+      if (isStreaming && isLastMsg && messages[i].role === "assistant" && isEmpty) {
+        var thinking = document.createElement("div");
+        thinking.className = "cf-thinking";
+        thinking.innerHTML =
+          '<span class="cf-thinking-text">' + esc(currentThinkingText) + '</span>' +
+          '<span class="cf-thinking-dots">' +
+          '<span class="cf-thinking-dot"></span>' +
+          '<span class="cf-thinking-dot"></span>' +
+          '<span class="cf-thinking-dot"></span>' +
+          '</span>';
+        msgContainer.appendChild(thinking);
+        continue;
+      }
+
       var msg = document.createElement("div");
       msg.className = "cf-msg " + messages[i].role;
-      msg.textContent = messages[i].content || (isStreaming && i === messages.length - 1 ? "..." : "");
+      if (messages[i].role === "assistant") {
+        msg.innerHTML = renderMarkdown(messages[i].content);
+      } else {
+        msg.textContent = messages[i].content;
+      }
       msgContainer.appendChild(msg);
     }
     modal.appendChild(msgContainer);
-    msgContainer.scrollTop = msgContainer.scrollHeight;
+    requestAnimationFrame(function () {
+      msgContainer.scrollTop = msgContainer.scrollHeight;
+    });
 
     // Input
     var inputArea = document.createElement("div");
@@ -297,6 +353,7 @@
     messages.push({ role: "user", content: text });
     messages.push({ role: "assistant", content: "" });
     isStreaming = true;
+    pickThinkingText();
     render();
 
     var history = messages.slice(0, -2).map(function (m) {
@@ -336,9 +393,6 @@
                   if (data.type === "content") {
                     messages[messages.length - 1].content += data.content;
                     render();
-                    // Scroll to bottom
-                    var msgEl = modal.querySelector(".cf-messages");
-                    if (msgEl) msgEl.scrollTop = msgEl.scrollHeight;
                   }
                 } catch (e) {}
               }
@@ -357,10 +411,87 @@
       });
   }
 
+  // Thinking indicator texts (matches PreviewModal)
+  var THINKING_TEXTS = [
+    "Pondering your question",
+    "Crafting a thoughtful response",
+    "Digging into my knowledge base",
+    "Connecting the dots",
+    "Thinking this through",
+    "Analyzing your question",
+    "Putting thoughts together",
+    "Reflecting on this",
+    "Considering the best approach",
+    "Gathering my thoughts",
+    "Processing your message",
+    "Working through this",
+    "Formulating a response",
+    "Let me think about that",
+    "Exploring possibilities",
+    "Weighing different angles",
+    "Synthesizing an answer",
+    "Mulling this over",
+    "Assembling my thoughts",
+    "Brewing up a response",
+  ];
+  var currentThinkingText = "";
+
+  function pickThinkingText() {
+    currentThinkingText = THINKING_TEXTS[Math.floor(Math.random() * THINKING_TEXTS.length)];
+  }
+
   function esc(str) {
     var div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  function renderMarkdown(text) {
+    var html = esc(text);
+
+    // Code blocks (``` ... ```)
+    html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, function (_, lang, code) {
+      return '<pre class="cf-md-pre"><code class="cf-md-codeblock">' + code.trim() + "</code></pre>";
+    });
+
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code class="cf-md-code">$1</code>');
+
+    // Headers
+    html = html.replace(/^### (.+)$/gm, '<h3 class="cf-md-h3">$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2 class="cf-md-h2">$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1 class="cf-md-h1">$1</h1>');
+
+    // Bold and italic
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
+    html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+
+    // Blockquotes
+    html = html.replace(/^&gt; (.+)$/gm, '<blockquote class="cf-md-bq">$1</blockquote>');
+
+    // Horizontal rules
+    html = html.replace(/^---$/gm, '<hr class="cf-md-hr">');
+
+    // Unordered lists
+    html = html.replace(/^[-*] (.+)$/gm, '<li class="cf-md-li">$1</li>');
+    html = html.replace(/((?:<li class="cf-md-li">.*<\/li>\n?)+)/g, '<ul class="cf-md-ul">$1</ul>');
+
+    // Ordered lists
+    html = html.replace(/^\d+\. (.+)$/gm, '<li class="cf-md-oli">$1</li>');
+    html = html.replace(/((?:<li class="cf-md-oli">.*<\/li>\n?)+)/g, '<ol class="cf-md-ol">$1</ol>');
+
+    // Links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a class="cf-md-a" href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+    // Paragraphs: wrap remaining bare lines
+    html = html.replace(/^(?!<[houblpra])((?!<).+)$/gm, '<p class="cf-md-p">$1</p>');
+
+    // Clean up extra newlines
+    html = html.replace(/\n{2,}/g, "");
+    html = html.replace(/\n/g, "");
+
+    return html;
   }
 
   // Toggle modal

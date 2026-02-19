@@ -74,8 +74,13 @@ export async function POST(
       );
     }
 
-    // RAG retrieval
-    const chunks = await queryKnowledgeBase(coach.id, message);
+    // RAG retrieval (include recent user messages for context-aware search)
+    const recentUserMessages = conversationHistory
+      .filter((msg: { role: string }) => msg.role === "user")
+      .slice(-2)
+      .map((msg: { content: string }) => msg.content);
+    const ragQuery = [...recentUserMessages, message].join("\n");
+    const chunks = await queryKnowledgeBase(coach.id, ragQuery);
     const contextString = buildContextString(chunks);
 
     // Build system prompt
