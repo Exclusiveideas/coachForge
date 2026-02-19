@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/middleware/withAuth";
 import { prisma } from "@/lib/db";
 import { addKnowledgeSchema } from "@/lib/validation/knowledge";
@@ -53,9 +53,13 @@ export const POST = withAuth(async (request: NextRequest, user, context) => {
       },
     });
 
-    invokeProcessKnowledge(knowledge.id).catch((err) =>
-      console.error("Lambda invoke error:", err)
-    );
+    after(async () => {
+      try {
+        await invokeProcessKnowledge(knowledge.id);
+      } catch (err) {
+        console.error("Lambda invoke error:", err);
+      }
+    });
 
     return NextResponse.json({ knowledge }, { status: 201 });
   } catch {
