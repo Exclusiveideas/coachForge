@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Warm cream rounded square -->
+  <rect width="512" height="512" rx="108" fill="#FFF8F0"/>
+  <rect width="512" height="512" rx="108" fill="none" stroke="#E5DDD0" stroke-width="8"/>
+  <!-- Stylized "CF" monogram in brand colors -->
+  <!-- C in dark brown -->
+  <path d="M148 256
+    C 148 178, 196 120, 268 120
+    C 296 120, 318 130, 334 146
+    L 308 178
+    C 296 166, 282 158, 264 158
+    C 214 158, 192 200, 192 256
+    C 192 312, 214 354, 264 354
+    C 282 354, 296 346, 308 334
+    L 334 366
+    C 318 382, 296 392, 268 392
+    C 196 392, 148 334, 148 256z"
+    fill="#4A3728"/>
+  <!-- F in accent orange, slightly overlapping -->
+  <path d="M280 152 h100 v38 h-58 v50 h48 v38 h-48 v114 h-42 V152z"
+    fill="#E8853D"/>
+</svg>

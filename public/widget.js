@@ -1,0 +1,394 @@
+(function () {
+  "use strict";
+
+  var script = document.currentScript;
+  if (!script) return;
+
+  var coachId = script.getAttribute("data-coach-id");
+  if (!coachId) {
+    console.error("CoachForge: data-coach-id is required");
+    return;
+  }
+
+  var apiBase = script.src.replace(/\/widget\.js.*$/, "");
+  var SESSION_KEY = "cf_session_" + coachId;
+  var HISTORY_KEY = "cf_history_" + coachId;
+  var SESSION_EXPIRY = 24 * 60 * 60 * 1000;
+
+  // State
+  var coach = null;
+  var messages = [];
+  var sessionId = "";
+  var isOpen = false;
+  var isStreaming = false;
+  var currentView = "chat"; // "chat" | "feedback"
+
+  // Session management
+  function getSession() {
+    try {
+      var stored = localStorage.getItem(SESSION_KEY);
+      if (stored) {
+        var data = JSON.parse(stored);
+        if (Date.now() - data.createdAt < SESSION_EXPIRY) {
+          return data;
+        }
+      }
+    } catch (e) {}
+    var newSession = {
+      id: "s_" + Math.random().toString(36).slice(2) + Date.now().toString(36),
+      createdAt: Date.now(),
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(newSession));
+    return newSession;
+  }
+
+  function loadHistory() {
+    try {
+      var stored = localStorage.getItem(HISTORY_KEY);
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return [];
+  }
+
+  function saveHistory() {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(messages.slice(-50)));
+    } catch (e) {}
+  }
+
+  // Inject styles
+  var style = document.createElement("style");
+  style.textContent = [
+    ".cf-widget *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}",
+    ".cf-btn{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:16px;background:#E8853D;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 24px rgba(0,0,0,.2);z-index:99998;transition:transform .2s}",
+    ".cf-btn:hover{transform:scale(1.08)}",
+    ".cf-modal{position:fixed;bottom:96px;right:24px;width:400px;height:600px;background:#1a1a1a;border-radius:20px;border:1px solid rgba(255,255,255,.1);box-shadow:0 8px 40px rgba(0,0,0,.4);z-index:99999;display:none;flex-direction:column;overflow:hidden}",
+    ".cf-modal.open{display:flex}",
+    "@media(max-width:480px){.cf-modal{bottom:0;right:0;width:100%;height:100%;border-radius:0}}",
+    ".cf-header{padding:16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}",
+    ".cf-avatar{width:40px;height:40px;background:rgba(232,133,61,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}",
+    ".cf-header-info{flex:1}",
+    ".cf-header-name{color:#fff;font-size:14px;font-weight:600}",
+    ".cf-header-sub{color:rgba(255,255,255,.5);font-size:12px}",
+    ".cf-status{width:10px;height:10px;background:#22c55e;border-radius:50%}",
+    ".cf-close{background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:18px;padding:4px}",
+    ".cf-close:hover{color:#fff}",
+    ".cf-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}",
+    ".cf-msg{max-width:80%;padding:10px 16px;border-radius:16px;font-size:14px;line-height:1.5;word-wrap:break-word;white-space:pre-wrap}",
+    ".cf-msg.assistant{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);align-self:flex-start;border-bottom-left-radius:4px}",
+    ".cf-msg.user{background:#E8853D;color:#fff;align-self:flex-end;border-bottom-right-radius:4px}",
+    ".cf-input-area{padding:12px;border-top:1px solid rgba(255,255,255,.1);display:flex;gap:8px}",
+    ".cf-input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 16px;color:#fff;font-size:14px;outline:none}",
+    ".cf-input::placeholder{color:rgba(255,255,255,.3)}",
+    ".cf-input:focus{border-color:rgba(232,133,61,.5)}",
+    ".cf-send{width:40px;height:40px;background:#E8853D;border:none;border-radius:12px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:background .2s}",
+    ".cf-send:hover{background:#D4742F}",
+    ".cf-send:disabled{opacity:.5;cursor:default}",
+    ".cf-footer{text-align:center;padding:8px;color:rgba(255,255,255,.2);font-size:11px}",
+    ".cf-footer a{color:rgba(255,255,255,.3);text-decoration:none}",
+    ".cf-footer-actions{display:flex;justify-content:center;gap:12px;padding:4px 12px 8px}",
+    ".cf-footer-btn{background:none;border:none;color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;padding:2px 4px}",
+    ".cf-footer-btn:hover{color:rgba(255,255,255,.6)}",
+    // Feedback form
+    ".cf-feedback{flex:1;padding:16px;display:flex;flex-direction:column;gap:12px}",
+    ".cf-feedback label{color:rgba(255,255,255,.7);font-size:13px;font-weight:500}",
+    ".cf-feedback input,.cf-feedback textarea{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;outline:none;width:100%;font-family:inherit}",
+    ".cf-feedback textarea{flex:1;resize:none;min-height:100px}",
+    ".cf-feedback input:focus,.cf-feedback textarea:focus{border-color:rgba(232,133,61,.5)}",
+    ".cf-fb-actions{display:flex;gap:8px}",
+    ".cf-fb-submit{flex:1;padding:10px;background:#E8853D;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}",
+    ".cf-fb-submit:hover{background:#D4742F}",
+    ".cf-fb-cancel{padding:10px 16px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:none;border-radius:8px;font-size:14px;cursor:pointer}",
+    ".cf-fb-cancel:hover{background:rgba(255,255,255,.15)}",
+  ].join("\n");
+  document.head.appendChild(style);
+
+  // Create widget container
+  var container = document.createElement("div");
+  container.className = "cf-widget";
+  document.body.appendChild(container);
+
+  // Floating button
+  var btn = document.createElement("button");
+  btn.className = "cf-btn";
+  btn.title = "Chat with coach";
+  container.appendChild(btn);
+
+  // Modal
+  var modal = document.createElement("div");
+  modal.className = "cf-modal";
+  container.appendChild(modal);
+
+  function render() {
+    // Button
+    btn.textContent = isOpen ? "✕" : (coach ? coach.emoji : "💬");
+    btn.style.background = isOpen ? "rgba(255,255,255,.15)" : "#E8853D";
+    btn.style.color = isOpen ? "#fff" : "";
+    btn.style.fontSize = isOpen ? "20px" : "24px";
+
+    // Modal
+    modal.className = isOpen ? "cf-modal open" : "cf-modal";
+    if (!isOpen) return;
+
+    modal.innerHTML = "";
+
+    // Header
+    var header = document.createElement("div");
+    header.className = "cf-header";
+    header.innerHTML =
+      '<div class="cf-avatar">' + (coach ? coach.emoji : "💬") + "</div>" +
+      '<div class="cf-header-info">' +
+      '<div class="cf-header-name">' + esc(coach ? coach.name : "Coach") + "</div>" +
+      '<div class="cf-header-sub">AI Coach · ' + esc(coach ? coach.tone : "") + "</div>" +
+      "</div>" +
+      '<div class="cf-status"></div>';
+    modal.appendChild(header);
+
+    if (currentView === "feedback") {
+      renderFeedbackForm();
+      return;
+    }
+
+    // Messages
+    var msgContainer = document.createElement("div");
+    msgContainer.className = "cf-messages";
+    for (var i = 0; i < messages.length; i++) {
+      var msg = document.createElement("div");
+      msg.className = "cf-msg " + messages[i].role;
+      msg.textContent = messages[i].content || (isStreaming && i === messages.length - 1 ? "..." : "");
+      msgContainer.appendChild(msg);
+    }
+    modal.appendChild(msgContainer);
+    msgContainer.scrollTop = msgContainer.scrollHeight;
+
+    // Input
+    var inputArea = document.createElement("div");
+    inputArea.className = "cf-input-area";
+    var input = document.createElement("input");
+    input.className = "cf-input";
+    input.placeholder = "Ask me anything...";
+    input.disabled = isStreaming;
+    var sendBtn = document.createElement("button");
+    sendBtn.className = "cf-send";
+    sendBtn.innerHTML = "→";
+    sendBtn.disabled = isStreaming;
+    inputArea.appendChild(input);
+    inputArea.appendChild(sendBtn);
+    modal.appendChild(inputArea);
+
+    function doSend() {
+      var text = input.value.trim();
+      if (!text || isStreaming) return;
+      input.value = "";
+      sendMessage(text);
+    }
+    sendBtn.onclick = doSend;
+    input.onkeydown = function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        doSend();
+      }
+    };
+    input.focus();
+
+    // Footer actions
+    var footerActions = document.createElement("div");
+    footerActions.className = "cf-footer-actions";
+    var fbBtn = document.createElement("button");
+    fbBtn.className = "cf-footer-btn";
+    fbBtn.textContent = "Send Feedback";
+    fbBtn.onclick = function () {
+      currentView = "feedback";
+      render();
+    };
+    footerActions.appendChild(fbBtn);
+    modal.appendChild(footerActions);
+
+    // Footer
+    var footer = document.createElement("div");
+    footer.className = "cf-footer";
+    footer.innerHTML = "Powered by <strong>CoachForge</strong>";
+    modal.appendChild(footer);
+  }
+
+  function renderFeedbackForm() {
+    var form = document.createElement("div");
+    form.className = "cf-feedback";
+
+    var subjectLabel = document.createElement("label");
+    subjectLabel.textContent = "Subject";
+    form.appendChild(subjectLabel);
+    var subjectInput = document.createElement("input");
+    subjectInput.type = "text";
+    subjectInput.placeholder = "e.g. Great experience!";
+    form.appendChild(subjectInput);
+
+    var contentLabel = document.createElement("label");
+    contentLabel.textContent = "Your feedback";
+    form.appendChild(contentLabel);
+    var contentInput = document.createElement("textarea");
+    contentInput.placeholder = "Tell us what you think...";
+    form.appendChild(contentInput);
+
+    var actions = document.createElement("div");
+    actions.className = "cf-fb-actions";
+
+    var cancelBtn = document.createElement("button");
+    cancelBtn.className = "cf-fb-cancel";
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.onclick = function () {
+      currentView = "chat";
+      render();
+    };
+
+    var submitBtn = document.createElement("button");
+    submitBtn.className = "cf-fb-submit";
+    submitBtn.textContent = "Submit Feedback";
+    submitBtn.onclick = function () {
+      var subject = subjectInput.value.trim();
+      var content = contentInput.value.trim();
+      if (!subject || !content) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
+
+      fetch(apiBase + "/api/public/chat/" + coachId + "/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          subject: subject,
+          content: content,
+        }),
+      })
+        .then(function (res) {
+          if (res.ok) {
+            currentView = "chat";
+            messages.push({
+              role: "assistant",
+              content: "Thanks for your feedback! 🙏",
+            });
+            saveHistory();
+            render();
+          } else {
+            submitBtn.textContent = "Failed. Try again.";
+            submitBtn.disabled = false;
+          }
+        })
+        .catch(function () {
+          submitBtn.textContent = "Failed. Try again.";
+          submitBtn.disabled = false;
+        });
+    };
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(submitBtn);
+    form.appendChild(actions);
+    modal.appendChild(form);
+
+    // Footer
+    var footer = document.createElement("div");
+    footer.className = "cf-footer";
+    footer.innerHTML = "Powered by <strong>CoachForge</strong>";
+    modal.appendChild(footer);
+  }
+
+  function sendMessage(text) {
+    messages.push({ role: "user", content: text });
+    messages.push({ role: "assistant", content: "" });
+    isStreaming = true;
+    render();
+
+    var history = messages.slice(0, -2).map(function (m) {
+      return { role: m.role, content: m.content };
+    });
+
+    fetch(apiBase + "/api/public/chat/" + coachId, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: text,
+        sessionId: sessionId,
+        conversationHistory: history.slice(-10),
+      }),
+    })
+      .then(function (res) {
+        if (!res.ok || !res.body) throw new Error("Request failed");
+        var reader = res.body.getReader();
+        var decoder = new TextDecoder();
+
+        function read() {
+          reader.read().then(function (result) {
+            if (result.done) {
+              isStreaming = false;
+              saveHistory();
+              render();
+              return;
+            }
+
+            var chunk = decoder.decode(result.value);
+            var lines = chunk.split("\n");
+
+            for (var i = 0; i < lines.length; i++) {
+              if (lines[i].indexOf("data: ") === 0) {
+                try {
+                  var data = JSON.parse(lines[i].slice(6));
+                  if (data.type === "content") {
+                    messages[messages.length - 1].content += data.content;
+                    render();
+                    // Scroll to bottom
+                    var msgEl = modal.querySelector(".cf-messages");
+                    if (msgEl) msgEl.scrollTop = msgEl.scrollHeight;
+                  }
+                } catch (e) {}
+              }
+            }
+
+            read();
+          });
+        }
+        read();
+      })
+      .catch(function () {
+        messages[messages.length - 1].content = "Sorry, something went wrong. Please try again.";
+        isStreaming = false;
+        saveHistory();
+        render();
+      });
+  }
+
+  function esc(str) {
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Toggle modal
+  btn.onclick = function () {
+    isOpen = !isOpen;
+    currentView = "chat";
+    render();
+  };
+
+  // Initialize
+  var session = getSession();
+  sessionId = session.id;
+  messages = loadHistory();
+
+  fetch(apiBase + "/api/public/chat/" + coachId)
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data.coach) {
+        coach = data.coach;
+        btn.textContent = coach.emoji;
+        // Add welcome message if no history
+        if (messages.length === 0) {
+          messages.push({ role: "assistant", content: coach.welcomeMessage });
+          saveHistory();
+        }
+      }
+    })
+    .catch(function (err) {
+      console.error("CoachForge: Failed to load coach config", err);
+    });
+})();

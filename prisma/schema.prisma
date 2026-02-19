@@ -1,0 +1,138 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [vector]
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String?
+  password          String
+  emailVerified     Boolean   @default(false)
+  passwordChangedAt DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  sessions Session[]
+  coaches  Coach[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+model Coach {
+  id          String @id @default(cuid())
+  userId      String
+  name        String
+  description String @db.Text
+  emoji       String @default("🎯")
+
+  tone           String  @default("Professional")
+  systemPrompt   String? @db.Text
+  welcomeMessage String  @default("Hi! How can I help you today?")
+
+  embedCode String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  knowledgeBase CoachKnowledge[]
+  feedbacks     CoachFeedback[]
+
+  @@index([userId])
+  @@index([embedCode])
+  @@map("coaches")
+}
+
+model CoachKnowledge {
+  id      String        @id @default(cuid())
+  coachId String
+  type    KnowledgeType
+  title   String
+  content String        @db.Text
+
+  status      ProcessingStatus @default(PENDING)
+  storageKey  String?
+  chunkCount  Int              @default(0)
+  processedAt DateTime?
+  error       String?          @db.Text
+
+  createdAt DateTime @default(now())
+
+  coach  Coach                 @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  chunks CoachKnowledgeChunk[]
+
+  @@index([coachId])
+  @@index([status])
+  @@map("coach_knowledge")
+}
+
+model CoachKnowledgeChunk {
+  id          String                       @id @default(cuid())
+  knowledgeId String
+  coachId     String
+  content     String                       @db.Text
+  embedding   Unsupported("vector(1536)")?
+  chunkIndex  Int
+
+  createdAt DateTime @default(now())
+
+  knowledge CoachKnowledge @relation(fields: [knowledgeId], references: [id], onDelete: Cascade)
+
+  @@index([coachId])
+  @@index([knowledgeId])
+  @@map("coach_knowledge_chunks")
+}
+
+model CoachFeedback {
+  id        String @id @default(cuid())
+  coachId   String
+  sessionId String
+
+  subject String
+  content String @db.Text
+
+  ipAddress String?
+  userAgent String?
+
+  submittedAt DateTime @default(now())
+
+  coach Coach @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@index([coachId])
+  @@index([submittedAt])
+  @@map("coach_feedbacks")
+}
+
+enum KnowledgeType {
+  FAQ
+  DOCUMENT
+  TEXT
+  URL
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
