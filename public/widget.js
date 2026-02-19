@@ -155,7 +155,7 @@
     // Button
     btn.textContent = isOpen ? "✕" : (coach ? coach.emoji : "💬");
     btn.style.background = isOpen ? "rgba(255,255,255,.15)" : "#E8853D";
-    btn.style.color = isOpen ? "#fff" : "";
+    btn.style.color = isOpen ? "#4A3728" : "";
     btn.style.fontSize = isOpen ? "20px" : "24px";
 
     // Modal

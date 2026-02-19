@@ -33,8 +33,10 @@ export function PreviewModal({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({
+      behavior: streaming ? "auto" : "smooth",
+    });
+  }, [messages, streaming]);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -162,8 +164,8 @@ export function PreviewModal({
                   <div
                     className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                       msg.role === "user"
-                        ? "bg-accent-orange text-white"
-                        : "bg-white/10 text-white/90"
+                        ? "bg-accent-orange text-white rounded-br-sm"
+                        : "bg-white/10 text-white/90 rounded-bl-sm"
                     }`}
                   >
                     {msg.role === "assistant" ? (
