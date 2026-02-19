@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { withAuth } from "@/lib/middleware/withAuth";
 import { prisma } from "@/lib/db";
-import { deleteFile } from "@/lib/services/storage/supabase";
 
 export const DELETE = withAuth(async (_request, user, context) => {
   const { id, knowledgeId } = await context!.params;
@@ -23,12 +22,6 @@ export const DELETE = withAuth(async (_request, user, context) => {
     );
   }
 
-  // Delete file from storage if it exists
-  if (knowledge.storageKey) {
-    await deleteFile("knowledge", knowledge.storageKey).catch(console.error);
-  }
-
-  // Delete chunks and knowledge item (cascades via Prisma)
   await prisma.coachKnowledge.delete({ where: { id: knowledgeId } });
 
   return NextResponse.json({ message: "Knowledge item deleted" });

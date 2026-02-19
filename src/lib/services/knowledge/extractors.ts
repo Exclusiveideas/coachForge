@@ -5,6 +5,16 @@ export async function extractPdfText(buffer: Buffer): Promise<string> {
   return data.text;
 }
 
+export async function extractDocText(buffer: Buffer): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const WordExtractor = require("word-extractor") as new () => {
+    extract: (input: Buffer) => Promise<{ getBody: () => string }>;
+  };
+  const extractor = new WordExtractor();
+  const doc = await extractor.extract(buffer);
+  return doc.getBody();
+}
+
 export async function extractDocxText(buffer: Buffer): Promise<string> {
   const mammoth = await import("mammoth");
   const result = await mammoth.extractRawText({ buffer });

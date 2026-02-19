@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/middleware/withAuth";
 import { prisma } from "@/lib/db";
-import { uploadFile } from "@/lib/services/storage/supabase";
 import { processKnowledge } from "@/lib/services/knowledge/embedder";
-import { nanoid } from "nanoid";
+import {
+  extractPdfText,
+  extractDocText,
+  extractDocxText,
+} from "@/lib/services/knowledge/extractors";
 
 const ALLOWED_TYPES = [
   "application/pdf",
+  "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/plain",
 ];
@@ -33,7 +37,7 @@ export const POST = withAuth(async (request: NextRequest, user, context) => {
 
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: "File type not supported. Use PDF, DOCX, or TXT." },
+        { error: "File type not supported. Use PDF, DOC, DOCX, or TXT." },
         { status: 400 }
       );
     }
@@ -46,22 +50,35 @@ export const POST = withAuth(async (request: NextRequest, user, context) => {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const ext = file.name.split(".").pop() || "bin";
-    const storageKey = `${id}/${nanoid()}.${ext}`;
+    const ext = file.name.split(".").pop()?.toLowerCase();
 
-    await uploadFile("knowledge", storageKey, buffer, file.type);
+    let content: string;
+    if (ext === "pdf") {
+      content = await extractPdfText(buffer);
+    } else if (ext === "doc") {
+      content = await extractDocText(buffer);
+    } else if (ext === "docx") {
+      content = await extractDocxText(buffer);
+    } else {
+      content = buffer.toString("utf-8");
+    }
+
+    if (!content || content.trim().length < 10) {
+      return NextResponse.json(
+        { error: "No meaningful text content found in document" },
+        { status: 400 }
+      );
+    }
 
     const knowledge = await prisma.coachKnowledge.create({
       data: {
         coachId: id,
         type: "DOCUMENT",
         title: title || file.name,
-        content: file.name,
-        storageKey,
+        content: content.trim(),
       },
     });
 
-    // Process in background
     processKnowledge(knowledge.id).catch(console.error);
 
     return NextResponse.json({ knowledge }, { status: 201 });

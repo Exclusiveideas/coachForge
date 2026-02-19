@@ -71,7 +71,6 @@ model CoachKnowledge {
   content String        @db.Text
 
   status      ProcessingStatus @default(PENDING)
-  storageKey  String?
   chunkCount  Int              @default(0)
   processedAt DateTime?
   error       String?          @db.Text

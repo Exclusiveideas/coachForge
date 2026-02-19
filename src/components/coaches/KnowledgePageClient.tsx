@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Trash2, FileText, HelpCircle, Globe, Upload, RefreshCw } from "lucide-react";
+import { Trash2, FileText, HelpCircle, Globe, Upload, RefreshCw, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+} from "@/components/ui/AlertDialog";
 
 interface Knowledge {
   id: string;
@@ -28,6 +36,20 @@ export function KnowledgePageClient({
 }) {
   const router = useRouter();
   const [addMode, setAddMode] = useState<AddMode>(null);
+
+  const hasProcessing = initialKnowledge.some(
+    (k) => k.status === "PENDING" || k.status === "PROCESSING"
+  );
+
+  useEffect(() => {
+    if (!hasProcessing) return;
+
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [hasProcessing, router]);
 
   return (
     <div className="mt-6 space-y-6">
@@ -272,11 +294,11 @@ function UploadDocumentForm({
       </div>
       <div>
         <label className="block text-sm font-medium text-dark-brown mb-1.5">
-          File (PDF, DOCX, or TXT - max 10MB)
+          File (PDF, DOC, DOCX, or TXT - max 10MB)
         </label>
         <input
           type="file"
-          accept=".pdf,.docx,.txt"
+          accept=".pdf,.doc,.docx,.txt"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
           className="w-full text-sm text-warm-brown file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-dark-brown file:text-white file:text-sm file:font-medium hover:file:bg-dark-brown/90"
           required
@@ -311,9 +333,9 @@ function KnowledgeItem({
 }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
+  const [open, setOpen] = useState(false);
 
   async function handleDelete() {
-    if (!confirm("Delete this knowledge item?")) return;
     setDeleting(true);
 
     try {
@@ -331,6 +353,7 @@ function KnowledgeItem({
       toast.error("Something went wrong");
     } finally {
       setDeleting(false);
+      setOpen(false);
     }
   }
 
@@ -378,13 +401,38 @@ function KnowledgeItem({
           <p className="text-xs text-error mt-1 truncate">{item.error}</p>
         )}
       </div>
-      <button
-        onClick={handleDelete}
-        disabled={deleting}
-        className="text-warm-brown hover:text-error transition shrink-0 disabled:opacity-50"
-      >
-        <Trash2 size={16} />
-      </button>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogTrigger asChild>
+          <button
+            className="text-warm-brown hover:text-error transition shrink-0"
+          >
+            <Trash2 size={16} />
+          </button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogTitle>Delete knowledge item</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete &ldquo;{item.title}&rdquo;? This will remove all associated chunks and embeddings. This action cannot be undone.
+          </AlertDialogDescription>
+          <div className="mt-4 flex justify-end gap-3">
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium bg-accent-red text-white hover:bg-accent-red/90 transition disabled:opacity-50"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </button>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

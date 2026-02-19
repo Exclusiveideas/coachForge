@@ -1,8 +1,7 @@
-import { supabase } from "@/lib/supabase";
 import { prisma } from "@/lib/db";
 import { generateEmbeddings } from "@/lib/services/openai/service";
 import { chunkText } from "./chunker";
-import { extractPdfText, extractDocxText, extractUrlText } from "./extractors";
+import { extractUrlText } from "./extractors";
 
 export async function processKnowledge(knowledgeId: string) {
   const knowledge = await prisma.coachKnowledge.findUnique({
@@ -22,42 +21,14 @@ export async function processKnowledge(knowledgeId: string) {
 
     switch (knowledge.type) {
       case "TEXT":
-        text = knowledge.content;
-        break;
-
       case "FAQ":
-        text = knowledge.content; // Already formatted as Q&A
+      case "DOCUMENT":
+        text = knowledge.content;
         break;
 
       case "URL":
         text = await extractUrlText(knowledge.content);
         break;
-
-      case "DOCUMENT": {
-        if (!knowledge.storageKey) {
-          throw new Error("No storage key for document");
-        }
-
-        const { data, error } = await supabase.storage
-          .from("knowledge")
-          .download(knowledge.storageKey);
-
-        if (error || !data) {
-          throw new Error(`Failed to download file: ${error?.message}`);
-        }
-
-        const buffer = Buffer.from(await data.arrayBuffer());
-        const ext = knowledge.storageKey.split(".").pop()?.toLowerCase();
-
-        if (ext === "pdf") {
-          text = await extractPdfText(buffer);
-        } else if (ext === "docx") {
-          text = await extractDocxText(buffer);
-        } else {
-          text = buffer.toString("utf-8");
-        }
-        break;
-      }
 
       default:
         throw new Error(`Unknown knowledge type: ${knowledge.type}`);
