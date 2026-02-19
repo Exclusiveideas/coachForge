@@ -201,10 +201,6 @@ export function PreviewModal({
             </form>
           </div>
 
-          {/* Footer */}
-          <div className="text-center py-2 text-white/30 text-xs">
-            Powered by <span className="font-medium">CoachForge</span>
-          </div>
         </div>
       </div>
     </div>

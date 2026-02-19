@@ -61,8 +61,6 @@
       ".cf-send{width:40px;height:40px;background:#E8853D;border:none;border-radius:12px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:background .2s}",
       ".cf-send:hover{background:#D4742F}",
       ".cf-send:disabled{opacity:.5;cursor:default}",
-      ".cf-footer{text-align:center;padding:8px;color:rgba(255,255,255,.2);font-size:11px}",
-      ".cf-footer a{color:rgba(255,255,255,.3);text-decoration:none}",
       ".cf-footer-actions{display:flex;justify-content:center;gap:12px;padding:4px 12px 8px}",
       ".cf-footer-btn{background:none;border:none;color:rgba(255,255,255,.3);font-size:11px;cursor:pointer;padding:2px 4px}",
       ".cf-footer-btn:hover{color:rgba(255,255,255,.6)}",
@@ -335,11 +333,6 @@
       };
       footerActions.appendChild(fbBtn);
       modal.appendChild(footerActions);
-
-      var footer = document.createElement("div");
-      footer.className = "cf-footer";
-      footer.innerHTML = "Powered by <strong>CoachForge</strong>";
-      modal.appendChild(footer);
     }
 
     function renderFeedbackForm() {
@@ -416,11 +409,6 @@
       actions.appendChild(submitBtn);
       form.appendChild(actions);
       modal.appendChild(form);
-
-      var footer = document.createElement("div");
-      footer.className = "cf-footer";
-      footer.innerHTML = "Powered by <strong>CoachForge</strong>";
-      modal.appendChild(footer);
     }
 
     function sendMessage(text) {
