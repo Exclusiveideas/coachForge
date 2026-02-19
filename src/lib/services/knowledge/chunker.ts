@@ -35,8 +35,8 @@ export function chunkText(text: string): string[] {
       chunks.push(chunk);
     }
 
+    if (end >= cleanText.length) break;
     start = end - CHUNK_OVERLAP;
-    if (start >= cleanText.length) break;
   }
 
   return chunks;
