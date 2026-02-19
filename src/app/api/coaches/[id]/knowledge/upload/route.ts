@@ -82,7 +82,8 @@ export const POST = withAuth(async (request: NextRequest, user, context) => {
     processKnowledge(knowledge.id).catch(console.error);
 
     return NextResponse.json({ knowledge }, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("Document upload error:", error);
     return NextResponse.json(
       { error: "Failed to upload document" },
       { status: 500 }
