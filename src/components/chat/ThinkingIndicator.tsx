@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const THINKING_TEXTS = [
   "Pondering your question...",
@@ -32,39 +32,26 @@ function pickRandomThinkingText(): string {
 export function ThinkingIndicator() {
   const [text] = useState(pickRandomThinkingText);
 
-  const [dotCount, setDotCount] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDotCount((prev) => (prev + 1) % 4);
-    }, 400);
-    return () => clearInterval(interval);
-  }, []);
-
-  const baseText = text.replace(/\.{2,}$/, "");
-  const dots = ".".repeat(dotCount || 1);
+  const baseText = text.replace(/\.{1,}$/, "");
 
   return (
     <div className="flex items-start gap-2">
-      <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 text-white/60 text-sm">
-        <div className="flex gap-0.5">
+      <div className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white/10 text-white/60 text-sm">
+        <span className="italic">{baseText}</span>
+        <div className="flex gap-0.5 items-center">
           <span
-            className="w-1.5 h-1.5 bg-accent-orange/70 rounded-full animate-bounce"
+            className="w-1.5 h-1.5 bg-accent-orange/70 rounded-full animate-[ripple_1.2s_ease-in-out_infinite]"
             style={{ animationDelay: "0ms" }}
           />
           <span
-            className="w-1.5 h-1.5 bg-accent-orange/70 rounded-full animate-bounce"
-            style={{ animationDelay: "150ms" }}
+            className="w-1.5 h-1.5 bg-accent-orange/70 rounded-full animate-[ripple_1.2s_ease-in-out_infinite]"
+            style={{ animationDelay: "200ms" }}
           />
           <span
-            className="w-1.5 h-1.5 bg-accent-orange/70 rounded-full animate-bounce"
-            style={{ animationDelay: "300ms" }}
+            className="w-1.5 h-1.5 bg-accent-orange/70 rounded-full animate-[ripple_1.2s_ease-in-out_infinite]"
+            style={{ animationDelay: "400ms" }}
           />
         </div>
-        <span className="italic">
-          {baseText}
-          {dots}
-        </span>
       </div>
     </div>
   );

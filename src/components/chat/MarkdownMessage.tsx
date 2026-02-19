@@ -24,7 +24,7 @@ export function MarkdownMessage({ content }: { content: string }) {
         ol: ({ children }) => (
           <ol className="list-decimal list-inside mb-2 space-y-0.5">{children}</ol>
         ),
-        li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+        li: ({ children }) => <li className="leading-relaxed [&>p]:inline">{children}</li>,
         blockquote: ({ children }) => (
           <blockquote className="border-l-2 border-accent-orange/50 pl-3 my-2 text-white/70 italic">
             {children}
