@@ -2,7 +2,6 @@ import { getServerSession } from "@/lib/auth/server-session";
 import { getCoachesByUser } from "@/lib/services/coachService";
 import { CreateCoachForm } from "@/components/dashboard/CreateCoachForm";
 import { CoachList } from "@/components/dashboard/CoachList";
-import { WidgetPreview } from "@/components/dashboard/WidgetPreview";
 
 export default async function DashboardPage() {
   const session = await getServerSession();
@@ -25,12 +24,6 @@ export default async function DashboardPage() {
           anywhere. Done.
         </p>
       </div>
-
-      <WidgetPreview
-        src="https://coach-forge-delta.vercel.app/widget.js"
-        coachId="cmlt4akvd0005tx6lbunl6gf7"
-        mode="inline"
-      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <CreateCoachForm />
