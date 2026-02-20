@@ -80,6 +80,34 @@
       ".cf-fb-submit:hover{background:#D4742F}",
       ".cf-fb-cancel{padding:10px 16px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:none;border-radius:8px;font-size:14px;cursor:pointer}",
       ".cf-fb-cancel:hover{background:rgba(255,255,255,.15)}",
+      // Light theme overrides
+      ".cf-light .cf-modal{background:#ffffff;border:1px solid rgba(0,0,0,.1);box-shadow:0 8px 40px rgba(0,0,0,.15)}",
+      ".cf-light .cf-header{border-bottom:1px solid rgba(0,0,0,.1)}",
+      ".cf-light .cf-avatar{background:rgba(232,133,61,.15)}",
+      ".cf-light .cf-header-name{color:#1a1a1a}",
+      ".cf-light .cf-header-sub{color:rgba(0,0,0,.5)}",
+      ".cf-light .cf-close{color:rgba(0,0,0,.4)}",
+      ".cf-light .cf-close:hover{color:#1a1a1a}",
+      ".cf-light .cf-messages{background:#ffffff}",
+      ".cf-light .cf-msg.assistant{background:rgba(0,0,0,.05);color:#1a1a1a}",
+      ".cf-light .cf-msg.user{background:#E8853D;color:#fff}",
+      ".cf-light .cf-thinking{background:rgba(0,0,0,.05)}",
+      ".cf-light .cf-thinking-text{color:rgba(0,0,0,.5)}",
+      ".cf-light .cf-input-area{border-top:1px solid rgba(0,0,0,.1)}",
+      ".cf-light .cf-input{background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.15);color:#1a1a1a}",
+      ".cf-light .cf-input::placeholder{color:rgba(0,0,0,.4)}",
+      ".cf-light .cf-input:focus{border-color:rgba(232,133,61,.5)}",
+      ".cf-light .cf-footer-btn{color:rgba(0,0,0,.4)}",
+      ".cf-light .cf-footer-btn:hover{color:rgba(0,0,0,.7)}",
+      ".cf-light .cf-msg.assistant .cf-md-bq{color:rgba(0,0,0,.6);border-left-color:rgba(232,133,61,.4)}",
+      ".cf-light .cf-msg.assistant .cf-md-code{background:rgba(0,0,0,.07)}",
+      ".cf-light .cf-msg.assistant .cf-md-pre{background:rgba(0,0,0,.05)}",
+      ".cf-light .cf-msg.assistant .cf-md-hr{border-top-color:rgba(0,0,0,.1)}",
+      ".cf-light .cf-feedback label{color:rgba(0,0,0,.6)}",
+      ".cf-light .cf-feedback input,.cf-light .cf-feedback textarea{background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.15);color:#1a1a1a}",
+      ".cf-light .cf-feedback input:focus,.cf-light .cf-feedback textarea:focus{border-color:rgba(232,133,61,.5)}",
+      ".cf-light .cf-fb-cancel{background:rgba(0,0,0,.08);color:rgba(0,0,0,.6)}",
+      ".cf-light .cf-fb-cancel:hover{background:rgba(0,0,0,.12)}",
     ].join("\n");
     document.head.appendChild(style);
   }
@@ -146,6 +174,8 @@
     var mode = el.getAttribute("data-mode") || "floating";
     var isInline = mode === "inline";
     var align = el.getAttribute("data-align") || "center";
+    var theme = el.getAttribute("data-theme") || "light";
+    var isLight = theme !== "dark";
     var targetSelector = el.getAttribute("data-container");
 
     // Determine API base from the script src, or fall back to current origin
@@ -206,8 +236,10 @@
     var modal = document.createElement("div");
     modal.className = "cf-modal";
 
+    var themeClass = isLight ? " cf-light" : "";
+
     if (isInline) {
-      container.className = "cf-widget cf-widget-inline cf-align-" + align;
+      container.className = "cf-widget cf-widget-inline cf-align-" + align + themeClass;
       var target = targetSelector ? document.querySelector(targetSelector) : null;
       if (target) {
         target.appendChild(container);
@@ -221,7 +253,7 @@
       }
       container.appendChild(modal);
     } else {
-      container.className = "cf-widget";
+      container.className = "cf-widget" + themeClass;
       document.body.appendChild(container);
       btn = document.createElement("button");
       btn.className = "cf-btn";
@@ -233,8 +265,8 @@
     function render() {
       if (btn) {
         btn.textContent = isOpen ? "\u2715" : (coach ? coach.emoji : "\uD83D\uDCAC");
-        btn.style.background = isOpen ? "rgba(255,255,255,.15)" : "#E8853D";
-        btn.style.color = isOpen ? "#4A3728" : "";
+        btn.style.background = isOpen ? (isLight ? "rgba(0,0,0,.08)" : "rgba(255,255,255,.15)") : "#E8853D";
+        btn.style.color = isOpen ? (isLight ? "#1a1a1a" : "#4A3728") : "";
         btn.style.fontSize = isOpen ? "20px" : "24px";
       }
 

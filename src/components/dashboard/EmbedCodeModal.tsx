@@ -5,6 +5,7 @@ import { X, Copy, Check } from "lucide-react";
 
 type EmbedMode = "floating" | "inline";
 type EmbedAlign = "center" | "left" | "right";
+type EmbedTheme = "light" | "dark";
 
 interface Coach {
   id: string;
@@ -18,11 +19,15 @@ function buildSnippet(
   coach: Coach,
   mode: EmbedMode,
   align: EmbedAlign,
+  theme: EmbedTheme,
 ) {
   const attrs = [
     `  src="${appUrl}/widget.js"`,
     `  data-coach-id="${coach.id}"`,
   ];
+  if (theme === "dark") {
+    attrs.push(`  data-theme="dark"`);
+  }
   if (mode === "inline") {
     attrs.push(`  data-mode="inline"`);
     if (align !== "center") {
@@ -42,9 +47,10 @@ export function EmbedCodeModal({
   const [copied, setCopied] = useState(false);
   const [mode, setMode] = useState<EmbedMode>("floating");
   const [align, setAlign] = useState<EmbedAlign>("center");
+  const [theme, setTheme] = useState<EmbedTheme>("light");
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  const embedSnippet = buildSnippet(appUrl, coach, mode, align);
+  const embedSnippet = buildSnippet(appUrl, coach, mode, align, theme);
 
   function handleCopy() {
     navigator.clipboard.writeText(embedSnippet);
@@ -95,6 +101,35 @@ export function EmbedCodeModal({
               }`}
             >
               Inline Embed
+            </button>
+          </div>
+        </div>
+
+        {/* Theme toggle */}
+        <div className="mb-4">
+          <label className="text-sm font-medium text-dark-brown block mb-2">
+            Theme
+          </label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setTheme("light")}
+              className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition ${
+                theme === "light"
+                  ? "bg-accent-orange text-white"
+                  : "bg-cream text-warm-brown hover:bg-cream/80"
+              }`}
+            >
+              Light Mode
+            </button>
+            <button
+              onClick={() => setTheme("dark")}
+              className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition ${
+                theme === "dark"
+                  ? "bg-accent-orange text-white"
+                  : "bg-cream text-warm-brown hover:bg-cream/80"
+              }`}
+            >
+              Dark Mode
             </button>
           </div>
         </div>
