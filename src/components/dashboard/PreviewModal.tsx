@@ -61,7 +61,7 @@ export function PreviewModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMessage,
-          conversationHistory: newMessages.slice(-10),
+          conversationHistory: newMessages.slice(-50),
         }),
       });
 

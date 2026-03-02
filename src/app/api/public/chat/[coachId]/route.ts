@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { streamChatCompletion } from "@/lib/services/openrouter/service";
+import {
+  streamChatCompletion,
+  getModelContextLength,
+  truncateToTokenBudget,
+} from "@/lib/services/openrouter/service";
 import {
   queryKnowledgeBase,
   buildContextString,
@@ -74,13 +78,18 @@ export async function POST(
       );
     }
 
-    // RAG retrieval (include recent user messages for context-aware search)
+    // RAG retrieval + model context lookup in parallel
+    const modelId = coach.modelId || "openai/gpt-4o-mini";
     const recentUserMessages = conversationHistory
       .filter((msg: { role: string }) => msg.role === "user")
       .slice(-2)
       .map((msg: { content: string }) => msg.content);
     const ragQuery = [...recentUserMessages, message].join("\n");
-    const chunks = await queryKnowledgeBase(coach.id, ragQuery);
+
+    const [chunks, contextLength] = await Promise.all([
+      queryKnowledgeBase(coach.id, ragQuery),
+      getModelContextLength(modelId),
+    ]);
     const contextString = buildContextString(chunks);
 
     // Build system prompt
@@ -92,15 +101,15 @@ export async function POST(
         tone: coach.tone,
       });
     const fullSystemPrompt = basePrompt + contextString;
-
-    // Build message history (limit to last 10 messages)
+    const history = conversationHistory.map(
+      (msg: { role: string; content: string }) => ({
+        role: msg.role as "user" | "assistant",
+        content: msg.content,
+      }),
+    );
+    const truncatedHistory = truncateToTokenBudget(history, contextLength);
     const messages = [
-      ...conversationHistory
-        .slice(-10)
-        .map((msg: { role: string; content: string }) => ({
-          role: msg.role as "user" | "assistant",
-          content: msg.content,
-        })),
+      ...truncatedHistory,
       { role: "user" as const, content: message },
     ];
 
@@ -124,7 +133,7 @@ export async function POST(
 
           await streamChatCompletion(
             {
-              modelId: coach.modelId || "openai/gpt-4o-mini",
+              modelId,
               systemPrompt: fullSystemPrompt,
               messages,
             },

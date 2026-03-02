@@ -506,7 +506,7 @@
         body: JSON.stringify({
           message: text,
           sessionId: sessionId,
-          conversationHistory: history.slice(-10),
+          conversationHistory: history.slice(-50),
         }),
       })
         .then(function (res) {
