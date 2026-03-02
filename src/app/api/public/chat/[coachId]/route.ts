@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { streamChatCompletion } from "@/lib/services/openai/service";
+import { streamChatCompletion } from "@/lib/services/openrouter/service";
 import {
   queryKnowledgeBase,
   buildContextString,
@@ -21,7 +21,7 @@ export async function OPTIONS() {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ coachId: string }> }
+  { params }: { params: Promise<{ coachId: string }> },
 ) {
   const { coachId } = await params;
 
@@ -39,7 +39,7 @@ export async function GET(
   if (!coach) {
     return NextResponse.json(
       { error: "Coach not found" },
-      { status: 404, headers: corsHeaders() }
+      { status: 404, headers: corsHeaders() },
     );
   }
 
@@ -48,7 +48,7 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ coachId: string }> }
+  { params }: { params: Promise<{ coachId: string }> },
 ) {
   const { coachId } = await params;
 
@@ -59,7 +59,7 @@ export async function POST(
     if (!message || typeof message !== "string" || message.length > 10000) {
       return NextResponse.json(
         { error: "Invalid message" },
-        { status: 400, headers: corsHeaders() }
+        { status: 400, headers: corsHeaders() },
       );
     }
 
@@ -70,7 +70,7 @@ export async function POST(
     if (!coach) {
       return NextResponse.json(
         { error: "Coach not found" },
-        { status: 404, headers: corsHeaders() }
+        { status: 404, headers: corsHeaders() },
       );
     }
 
@@ -95,12 +95,12 @@ export async function POST(
 
     // Build message history (limit to last 10 messages)
     const messages = [
-      ...conversationHistory.slice(-10).map(
-        (msg: { role: string; content: string }) => ({
+      ...conversationHistory
+        .slice(-10)
+        .map((msg: { role: string; content: string }) => ({
           role: msg.role as "user" | "assistant",
           content: msg.content,
-        })
-      ),
+        })),
       { role: "user" as const, content: message },
     ];
 
@@ -123,16 +123,22 @@ export async function POST(
           send(`data: ${JSON.stringify({ type: "start" })}\n\n`);
 
           await streamChatCompletion(
-            { systemPrompt: fullSystemPrompt, messages },
+            {
+              modelId: coach.modelId || "openai/gpt-4o-mini",
+              systemPrompt: fullSystemPrompt,
+              messages,
+            },
             (content) => {
               send(`data: ${JSON.stringify({ type: "content", content })}\n\n`);
-            }
+            },
           );
 
           send(`data: ${JSON.stringify({ type: "complete" })}\n\n`);
         } catch (error) {
           console.error("Stream error:", error);
-          send(`data: ${JSON.stringify({ type: "error", error: "Failed to generate response" })}\n\n`);
+          send(
+            `data: ${JSON.stringify({ type: "error", error: "Failed to generate response" })}\n\n`,
+          );
         } finally {
           if (!closed) controller.close();
           closed = true;
@@ -151,7 +157,7 @@ export async function POST(
   } catch {
     return NextResponse.json(
       { error: "Something went wrong" },
-      { status: 500, headers: corsHeaders() }
+      { status: 500, headers: corsHeaders() },
     );
   }
 }

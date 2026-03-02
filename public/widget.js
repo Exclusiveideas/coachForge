@@ -9,7 +9,7 @@
       ".cf-widget *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}",
       ".cf-btn{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:16px;background:#E8853D;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 24px rgba(0,0,0,.2);z-index:99998;transition:transform .2s}",
       ".cf-btn:hover{transform:scale(1.08)}",
-      ".cf-modal{position:fixed;bottom:96px;right:24px;width:400px;height:600px;background:#1a1a1a;border-radius:20px;border:1px solid rgba(255,255,255,.1);box-shadow:0 8px 40px rgba(0,0,0,.4);z-index:99999;display:none;flex-direction:column;overflow:hidden}",
+      ".cf-modal{position:fixed;bottom:96px;right:24px;width:600px;height:600px;background:#1a1a1a;border-radius:20px;border:1px solid rgba(255,255,255,.1);box-shadow:0 8px 40px rgba(0,0,0,.4);z-index:99999;display:none;flex-direction:column;overflow:hidden}",
       ".cf-modal.open{display:flex}",
       "@media(max-width:480px){.cf-modal{bottom:0;right:0;width:100%;height:100%;border-radius:0}}",
       ".cf-header{padding:16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px}",
@@ -144,7 +144,11 @@
   function renderMarkdown(text) {
     var html = esc(text);
     html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, function (_, lang, code) {
-      return '<pre class="cf-md-pre"><code class="cf-md-codeblock">' + code.trim() + "</code></pre>";
+      return (
+        '<pre class="cf-md-pre"><code class="cf-md-codeblock">' +
+        code.trim() +
+        "</code></pre>"
+      );
     });
     html = html.replace(/`([^`]+)`/g, '<code class="cf-md-code">$1</code>');
     html = html.replace(/^### (.+)$/gm, '<h3 class="cf-md-h3">$1</h3>');
@@ -153,14 +157,29 @@
     html = html.replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>");
     html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-    html = html.replace(/^&gt; (.+)$/gm, '<blockquote class="cf-md-bq">$1</blockquote>');
+    html = html.replace(
+      /^&gt; (.+)$/gm,
+      '<blockquote class="cf-md-bq">$1</blockquote>',
+    );
     html = html.replace(/^---$/gm, '<hr class="cf-md-hr">');
     html = html.replace(/^[-*] (.+)$/gm, '<li class="cf-md-li">$1</li>');
-    html = html.replace(/((?:<li class="cf-md-li">.*<\/li>\n?)+)/g, '<ul class="cf-md-ul">$1</ul>');
+    html = html.replace(
+      /((?:<li class="cf-md-li">.*<\/li>\n?)+)/g,
+      '<ul class="cf-md-ul">$1</ul>',
+    );
     html = html.replace(/^\d+\. (.+)$/gm, '<li class="cf-md-oli">$1</li>');
-    html = html.replace(/((?:<li class="cf-md-oli">.*<\/li>\n?)+)/g, '<ol class="cf-md-ol">$1</ol>');
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a class="cf-md-a" href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-    html = html.replace(/^(?!<[houblpra])((?!<).+)$/gm, '<p class="cf-md-p">$1</p>');
+    html = html.replace(
+      /((?:<li class="cf-md-oli">.*<\/li>\n?)+)/g,
+      '<ol class="cf-md-ol">$1</ol>',
+    );
+    html = html.replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      '<a class="cf-md-a" href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+    );
+    html = html.replace(
+      /^(?!<[houblpra])((?!<).+)$/gm,
+      '<p class="cf-md-p">$1</p>',
+    );
     html = html.replace(/\n{2,}/g, "");
     html = html.replace(/\n/g, "");
     return html;
@@ -168,7 +187,8 @@
 
   // Initialize a single widget instance
   function initWidget(el) {
-    var coachId = el.getAttribute("data-coach-id") || el.getAttribute("data-cf-coach-id");
+    var coachId =
+      el.getAttribute("data-coach-id") || el.getAttribute("data-cf-coach-id");
     if (!coachId) return;
 
     var mode = el.getAttribute("data-mode") || "floating";
@@ -205,7 +225,8 @@
         }
       } catch (e) {}
       var newSession = {
-        id: "s_" + Math.random().toString(36).slice(2) + Date.now().toString(36),
+        id:
+          "s_" + Math.random().toString(36).slice(2) + Date.now().toString(36),
         createdAt: Date.now(),
       };
       localStorage.setItem(SESSION_KEY, JSON.stringify(newSession));
@@ -227,7 +248,8 @@
     }
 
     function pickThinkingText() {
-      currentThinkingText = THINKING_TEXTS[Math.floor(Math.random() * THINKING_TEXTS.length)];
+      currentThinkingText =
+        THINKING_TEXTS[Math.floor(Math.random() * THINKING_TEXTS.length)];
     }
 
     // Build DOM
@@ -239,8 +261,11 @@
     var themeClass = isLight ? " cf-light" : "";
 
     if (isInline) {
-      container.className = "cf-widget cf-widget-inline cf-align-" + align + themeClass;
-      var target = targetSelector ? document.querySelector(targetSelector) : null;
+      container.className =
+        "cf-widget cf-widget-inline cf-align-" + align + themeClass;
+      var target = targetSelector
+        ? document.querySelector(targetSelector)
+        : null;
       if (target) {
         target.appendChild(container);
       } else if (el.parentNode && el.tagName === "SCRIPT") {
@@ -264,8 +289,16 @@
 
     function render() {
       if (btn) {
-        btn.textContent = isOpen ? "\u2715" : (coach ? coach.emoji : "\uD83D\uDCAC");
-        btn.style.background = isOpen ? (isLight ? "rgba(0,0,0,.08)" : "rgba(255,255,255,.15)") : "#E8853D";
+        btn.textContent = isOpen
+          ? "\u2715"
+          : coach
+            ? coach.emoji
+            : "\uD83D\uDCAC";
+        btn.style.background = isOpen
+          ? isLight
+            ? "rgba(0,0,0,.08)"
+            : "rgba(255,255,255,.15)"
+          : "#E8853D";
         btn.style.color = isOpen ? (isLight ? "#1a1a1a" : "#4A3728") : "";
         btn.style.fontSize = isOpen ? "20px" : "24px";
       }
@@ -278,10 +311,16 @@
       var header = document.createElement("div");
       header.className = "cf-header";
       header.innerHTML =
-        '<div class="cf-avatar">' + (coach ? coach.emoji : "\uD83D\uDCAC") + "</div>" +
+        '<div class="cf-avatar">' +
+        (coach ? coach.emoji : "\uD83D\uDCAC") +
+        "</div>" +
         '<div class="cf-header-info">' +
-        '<div class="cf-header-name">' + esc(coach ? coach.name : "Coach") + "</div>" +
-        '<div class="cf-header-sub">AI Coach \u00B7 ' + esc(coach ? coach.tone : "") + "</div>" +
+        '<div class="cf-header-name">' +
+        esc(coach ? coach.name : "Coach") +
+        "</div>" +
+        '<div class="cf-header-sub">AI Coach \u00B7 ' +
+        esc(coach ? coach.tone : "") +
+        "</div>" +
         "</div>" +
         '<div class="cf-status"></div>';
       modal.appendChild(header);
@@ -297,16 +336,23 @@
         var isLastMsg = i === messages.length - 1;
         var isEmpty = !messages[i].content;
 
-        if (isStreaming && isLastMsg && messages[i].role === "assistant" && isEmpty) {
+        if (
+          isStreaming &&
+          isLastMsg &&
+          messages[i].role === "assistant" &&
+          isEmpty
+        ) {
           var thinking = document.createElement("div");
           thinking.className = "cf-thinking";
           thinking.innerHTML =
-            '<span class="cf-thinking-text">' + esc(currentThinkingText) + '</span>' +
+            '<span class="cf-thinking-text">' +
+            esc(currentThinkingText) +
+            "</span>" +
             '<span class="cf-thinking-dots">' +
             '<span class="cf-thinking-dot"></span>' +
             '<span class="cf-thinking-dot"></span>' +
             '<span class="cf-thinking-dot"></span>' +
-            '</span>';
+            "</span>";
           msgContainer.appendChild(thinking);
           continue;
         }
@@ -498,7 +544,8 @@
           read();
         })
         .catch(function () {
-          messages[messages.length - 1].content = "Sorry, something went wrong. Please try again.";
+          messages[messages.length - 1].content =
+            "Sorry, something went wrong. Please try again.";
           isStreaming = false;
           saveHistory();
           render();
@@ -518,7 +565,9 @@
     messages = loadHistory();
 
     fetch(apiBase + "/api/public/chat/" + coachId)
-      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        return res.json();
+      })
       .then(function (data) {
         if (data.coach) {
           coach = data.coach;
@@ -536,7 +585,9 @@
   }
 
   // Initialize all uninitialized widget script tags
-  var scripts = document.querySelectorAll('script[data-coach-id][src*="widget.js"]');
+  var scripts = document.querySelectorAll(
+    'script[data-coach-id][src*="widget.js"]',
+  );
   for (var i = 0; i < scripts.length; i++) {
     if (!scripts[i].__cfInit) {
       scripts[i].__cfInit = true;
@@ -545,7 +596,9 @@
   }
 
   // Also support container divs for frameworks (Next.js, React) that inject scripts dynamically
-  var containers = document.querySelectorAll("[data-cf-coach-id]:not([data-cf-init])");
+  var containers = document.querySelectorAll(
+    "[data-cf-coach-id]:not([data-cf-init])",
+  );
   for (var j = 0; j < containers.length; j++) {
     containers[j].setAttribute("data-cf-init", "true");
     initWidget(containers[j]);

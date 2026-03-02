@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { generateEmbeddings } from "@/lib/services/openai/service";
+import { generateEmbeddings } from "@/lib/services/openrouter/service";
 import { chunkText } from "./chunker";
 import { extractUrlText } from "./extractors";
 

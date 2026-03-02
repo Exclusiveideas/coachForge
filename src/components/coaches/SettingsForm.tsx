@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { TONES, EMOJI_OPTIONS } from "@/lib/validation/coach";
 import { cn } from "@/lib/utils";
+import { ModelSelector } from "@/components/ui/ModelSelector";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -21,6 +22,7 @@ interface Coach {
   description: string;
   emoji: string;
   tone: string;
+  modelId: string | null;
   systemPrompt: string | null;
   welcomeMessage: string;
 }
@@ -31,6 +33,7 @@ export function SettingsForm({ coach }: { coach: Coach }) {
   const [description, setDescription] = useState(coach.description);
   const [emoji, setEmoji] = useState(coach.emoji);
   const [tone, setTone] = useState(coach.tone);
+  const [modelId, setModelId] = useState(coach.modelId || "");
   const [systemPrompt, setSystemPrompt] = useState(coach.systemPrompt || "");
   const [welcomeMessage, setWelcomeMessage] = useState(coach.welcomeMessage);
   const [saving, setSaving] = useState(false);
@@ -49,6 +52,7 @@ export function SettingsForm({ coach }: { coach: Coach }) {
           description,
           emoji,
           tone,
+          modelId: modelId || undefined,
           systemPrompt: systemPrompt || null,
           welcomeMessage,
         }),
@@ -130,7 +134,7 @@ export function SettingsForm({ coach }: { coach: Coach }) {
                   "px-3.5 py-1.5 rounded-full text-sm font-medium border transition",
                   tone === t
                     ? "bg-dark-brown text-white border-dark-brown"
-                    : "bg-cream text-dark-brown border-border hover:border-dark-brown/30"
+                    : "bg-cream text-dark-brown border-border hover:border-dark-brown/30",
                 )}
               >
                 {t}
@@ -153,13 +157,20 @@ export function SettingsForm({ coach }: { coach: Coach }) {
                   "w-10 h-10 rounded-lg text-lg flex items-center justify-center border transition",
                   emoji === e
                     ? "bg-accent-orange/10 border-accent-orange"
-                    : "bg-cream border-border hover:border-dark-brown/30"
+                    : "bg-cream border-border hover:border-dark-brown/30",
                 )}
               >
                 {e}
               </button>
             ))}
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-dark-brown mb-2">
+            AI Model
+          </label>
+          <ModelSelector value={modelId} onChange={setModelId} />
         </div>
 
         <div>
@@ -177,7 +188,9 @@ export function SettingsForm({ coach }: { coach: Coach }) {
         <div>
           <label className="block text-sm font-medium text-dark-brown mb-1.5">
             System Prompt{" "}
-            <span className="text-warm-brown font-normal">(optional override)</span>
+            <span className="text-warm-brown font-normal">
+              (optional override)
+            </span>
           </label>
           <textarea
             value={systemPrompt}
@@ -203,7 +216,8 @@ export function SettingsForm({ coach }: { coach: Coach }) {
           <AlertDialogContent>
             <AlertDialogTitle>Delete Coach</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this coach? This action cannot be undone and all associated data will be permanently removed.
+              Are you sure you want to delete this coach? This action cannot be
+              undone and all associated data will be permanently removed.
             </AlertDialogDescription>
             <div className="mt-4 flex justify-end gap-3">
               <AlertDialogCancel>Cancel</AlertDialogCancel>

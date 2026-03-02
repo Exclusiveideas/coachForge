@@ -2,7 +2,10 @@ import pg from "pg";
 import OpenAI from "openai";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1",
+});
 
 // --- Chunker (mirrored from src/lib/services/knowledge/chunker.ts) ---
 
@@ -91,7 +94,7 @@ async function extractUrlText(url) {
 
 async function generateEmbeddings(texts) {
   const response = await openai.embeddings.create({
-    model: "text-embedding-3-small",
+    model: "openai/text-embedding-3-small",
     input: texts,
   });
   return response.data.map((d) => d.embedding);
@@ -113,7 +116,7 @@ export async function handler(event) {
     // Fetch knowledge record
     const { rows } = await client.query(
       'SELECT id, "coachId", type, content, "retryCount" FROM coach_knowledge WHERE id = $1',
-      [knowledgeId]
+      [knowledgeId],
     );
 
     if (rows.length === 0) {
@@ -124,10 +127,10 @@ export async function handler(event) {
     const knowledge = rows[0];
 
     // Set status to PROCESSING
-    await client.query(
-      "UPDATE coach_knowledge SET status = $1 WHERE id = $2",
-      ["PROCESSING", knowledgeId]
-    );
+    await client.query("UPDATE coach_knowledge SET status = $1 WHERE id = $2", [
+      "PROCESSING",
+      knowledgeId,
+    ]);
 
     // Extract text based on type
     let text;
@@ -152,7 +155,7 @@ export async function handler(event) {
     }
 
     console.log(
-      `Processing ${knowledgeId}: ${chunks.length} chunks from ${text.length} chars`
+      `Processing ${knowledgeId}: ${chunks.length} chunks from ${text.length} chars`,
     );
 
     // Generate embeddings in batches
@@ -171,14 +174,14 @@ export async function handler(event) {
       }
 
       console.log(
-        `Embedded batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(chunks.length / batchSize)}`
+        `Embedded batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(chunks.length / batchSize)}`,
       );
     }
 
     // Delete existing chunks
     await client.query(
       'DELETE FROM coach_knowledge_chunks WHERE "knowledgeId" = $1',
-      [knowledgeId]
+      [knowledgeId],
     );
 
     // Insert chunks with embeddings
@@ -190,18 +193,18 @@ export async function handler(event) {
       await client.query(
         `INSERT INTO coach_knowledge_chunks (id, "knowledgeId", "coachId", content, embedding, "chunkIndex", "createdAt")
          VALUES ($1, $2, $3, $4, $5::vector, $6, NOW())`,
-        [id, knowledgeId, knowledge.coachId, content, embeddingStr, i]
+        [id, knowledgeId, knowledge.coachId, content, embeddingStr, i],
       );
     }
 
     // Update status to COMPLETED
     await client.query(
       `UPDATE coach_knowledge SET status = $1, "chunkCount" = $2, "processedAt" = NOW(), error = NULL WHERE id = $3`,
-      ["COMPLETED", allChunkData.length, knowledgeId]
+      ["COMPLETED", allChunkData.length, knowledgeId],
     );
 
     console.log(
-      `Completed ${knowledgeId}: ${allChunkData.length} chunks stored`
+      `Completed ${knowledgeId}: ${allChunkData.length} chunks stored`,
     );
 
     return { statusCode: 200, body: `Processed ${allChunkData.length} chunks` };
@@ -215,7 +218,7 @@ export async function handler(event) {
           "FAILED",
           error instanceof Error ? error.message : "Unknown error",
           knowledgeId,
-        ]
+        ],
       );
     } catch (updateError) {
       console.error("Failed to update error status:", updateError);

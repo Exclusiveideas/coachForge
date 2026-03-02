@@ -10,7 +10,14 @@ export const TONES = [
 ] as const;
 
 export const EMOJI_OPTIONS = [
-  "🎯", "🏰", "🚀", "🧠", "💪", "✨", "📈", "⚡",
+  "🎯",
+  "🏰",
+  "🚀",
+  "🧠",
+  "💪",
+  "✨",
+  "📈",
+  "⚡",
 ] as const;
 
 export const createCoachSchema = z.object({
@@ -18,6 +25,7 @@ export const createCoachSchema = z.object({
   description: z.string().min(1, "Description is required"),
   emoji: z.string().default("🎯"),
   tone: z.enum(TONES).default("Professional"),
+  modelId: z.string().min(1, "Model is required"),
 });
 
 export const updateCoachSchema = z.object({
@@ -25,6 +33,7 @@ export const updateCoachSchema = z.object({
   description: z.string().min(1).optional(),
   emoji: z.string().optional(),
   tone: z.enum(TONES).optional(),
+  modelId: z.string().min(1).optional(),
   systemPrompt: z.string().nullable().optional(),
   welcomeMessage: z.string().optional(),
 });

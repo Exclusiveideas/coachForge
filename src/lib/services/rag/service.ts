@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { generateEmbedding } from "@/lib/services/openai/service";
+import { generateEmbedding } from "@/lib/services/openrouter/service";
 
 interface RetrievedChunk {
   content: string;

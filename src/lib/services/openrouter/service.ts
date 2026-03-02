@@ -1,42 +1,44 @@
 import OpenAI from "openai";
 
-let _openai: OpenAI | null = null;
-function getOpenAI() {
-  if (!_openai) {
-    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _client: OpenAI | null = null;
+function getClient() {
+  if (!_client) {
+    _client = new OpenAI({
+      apiKey: process.env.OPENROUTER_API_KEY,
+      baseURL: "https://openrouter.ai/api/v1",
+    });
   }
-  return _openai;
+  return _client;
 }
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const response = await getOpenAI().embeddings.create({
-    model: "text-embedding-3-small",
+  const response = await getClient().embeddings.create({
+    model: "openai/text-embedding-3-small",
     input: text,
   });
   return response.data[0].embedding;
 }
 
-export async function generateEmbeddings(
-  texts: string[]
-): Promise<number[][]> {
-  const response = await getOpenAI().embeddings.create({
-    model: "text-embedding-3-small",
+export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
+  const response = await getClient().embeddings.create({
+    model: "openai/text-embedding-3-small",
     input: texts,
   });
   return response.data.map((d) => d.embedding);
 }
 
 export interface StreamChatParams {
+  modelId: string;
   systemPrompt: string;
   messages: Array<{ role: "user" | "assistant"; content: string }>;
 }
 
 export async function streamChatCompletion(
   params: StreamChatParams,
-  onChunk: (content: string) => void
+  onChunk: (content: string) => void,
 ): Promise<void> {
-  const stream = await getOpenAI().chat.completions.create({
-    model: "gpt-4o-mini",
+  const stream = await getClient().chat.completions.create({
+    model: params.modelId,
     messages: [
       { role: "system", content: params.systemPrompt },
       ...params.messages,

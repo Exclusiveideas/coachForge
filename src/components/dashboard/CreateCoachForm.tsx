@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { TONES, EMOJI_OPTIONS } from "@/lib/validation/coach";
 import { cn } from "@/lib/utils";
+import { ModelSelector } from "@/components/ui/ModelSelector";
 
 export function CreateCoachForm() {
   const router = useRouter();
@@ -12,18 +13,19 @@ export function CreateCoachForm() {
   const [description, setDescription] = useState("");
   const [tone, setTone] = useState<string>("Professional");
   const [emoji, setEmoji] = useState<string>("🎯");
+  const [modelId, setModelId] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !description.trim()) return;
+    if (!name.trim() || !description.trim() || !modelId) return;
 
     setLoading(true);
     try {
       const res = await fetch("/api/coaches", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, tone, emoji }),
+        body: JSON.stringify({ name, description, tone, emoji, modelId }),
       });
 
       if (!res.ok) {
@@ -37,6 +39,7 @@ export function CreateCoachForm() {
       setDescription("");
       setTone("Professional");
       setEmoji("🎯");
+      setModelId("");
       router.refresh();
     } catch {
       toast.error("Something went wrong");
@@ -95,7 +98,7 @@ export function CreateCoachForm() {
                   "px-3.5 py-1.5 rounded-full text-sm font-medium border transition",
                   tone === t
                     ? "bg-dark-brown text-white border-dark-brown"
-                    : "bg-cream text-dark-brown border-border hover:border-dark-brown/30"
+                    : "bg-cream text-dark-brown border-border hover:border-dark-brown/30",
                 )}
               >
                 {t}
@@ -118,7 +121,7 @@ export function CreateCoachForm() {
                   "w-10 h-10 rounded-lg text-lg flex items-center justify-center border transition",
                   emoji === e
                     ? "bg-accent-orange/10 border-accent-orange"
-                    : "bg-cream border-border hover:border-dark-brown/30"
+                    : "bg-cream border-border hover:border-dark-brown/30",
                 )}
               >
                 {e}
@@ -127,9 +130,16 @@ export function CreateCoachForm() {
           </div>
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-dark-brown mb-2">
+            AI Model
+          </label>
+          <ModelSelector value={modelId} onChange={setModelId} />
+        </div>
+
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !modelId}
           className="w-full bg-dark-brown text-white py-3 rounded-lg font-medium hover:bg-dark-brown/90 transition disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {loading ? "Creating..." : "Create Coach"} →

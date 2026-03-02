@@ -46,6 +46,7 @@ model Coach {
   emoji       String @default("🎯")
 
   tone           String  @default("Professional")
+  modelId        String?
   systemPrompt   String? @db.Text
   welcomeMessage String  @default("Hi! How can I help you today?")
 

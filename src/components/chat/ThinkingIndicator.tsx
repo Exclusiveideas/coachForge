@@ -36,7 +36,7 @@ export function ThinkingIndicator() {
 
   return (
     <div className="flex items-start gap-2">
-      <div className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-white/10 text-white/60 text-sm">
+      <div className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-black/5 text-black/50 text-sm">
         <span className="italic">{baseText}</span>
         <div className="flex gap-0.5 items-center">
           <span
