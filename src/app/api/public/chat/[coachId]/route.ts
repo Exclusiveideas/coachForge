@@ -154,7 +154,8 @@ export async function POST(
         Connection: "keep-alive",
       },
     });
-  } catch {
+  } catch (error) {
+    console.error("Chat route error:", error);
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500, headers: corsHeaders() },
